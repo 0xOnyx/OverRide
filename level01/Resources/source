@@ -1,0 +1,79 @@
+.text:080484D0                 public main
+.text:080484D0 main            proc near               ; DATA XREF: _start+17↑o
+.text:080484D0
+.text:080484D0 anonymous_0     = dword ptr -0Ch
+.text:080484D0 argc            = dword ptr  8
+.text:080484D0 argv            = dword ptr  0Ch
+.text:080484D0 envp            = dword ptr  10h
+.text:080484D0
+.text:080484D0 ; __unwind {
+.text:080484D0                 push    ebp
+.text:080484D1                 mov     ebp, esp
+.text:080484D3                 push    edi
+.text:080484D4                 push    ebx
+.text:080484D5                 and     esp, 0FFFFFFF0h
+.text:080484D8                 sub     esp, 96
+.text:080484DB                 lea     ebx, [esp+1Ch]
+.text:080484DF                 mov     eax, 0
+.text:080484E4                 mov     edx, 16
+.text:080484E9                 mov     edi, ebx
+.text:080484EB                 mov     ecx, edx
+.text:080484ED                 rep stosd
+.text:080484EF                 mov     dword ptr [esp+92], 0
+.text:080484F7                 mov     dword ptr [esp], offset aAdminLoginProm ; "********* ADMIN LOGIN PROMPT *********"
+.text:080484FE                 call    _puts
+.text:08048503                 mov     eax, 80486DFh
+.text:08048508                 mov     [esp], eax
+.text:0804850B                 call    _printf
+.text:08048510                 mov     eax, ds:stdin@@GLIBC_2_0
+.text:08048515                 mov     [esp+8], eax
+.text:08048519                 mov     dword ptr [esp+4], 256
+.text:08048521                 mov     dword ptr [esp], offset a_user_name
+.text:08048528                 call    _fgets
+.text:0804852D                 call    verify_user_name
+.text:08048532                 mov     [esp+92], eax
+.text:08048536                 cmp     dword ptr [esp+92], 0
+.text:0804853B                 jz      short loc_8048550
+.text:0804853D                 mov     dword ptr [esp], offset aNopeIncorrectU ; "nope, incorrect username...\n"
+.text:08048544                 call    _puts
+.text:08048549                 mov     eax, 1
+.text:0804854E                 jmp     short loc_80485AF
+.text:08048550 ; ---------------------------------------------------------------------------
+.text:08048550
+.text:08048550 loc_8048550:                            ; CODE XREF: main+6B↑j
+.text:08048550                 mov     dword ptr [esp], offset aEnterPassword ; "Enter Password: "
+.text:08048557                 call    _puts
+.text:0804855C                 mov     eax, ds:stdin@@GLIBC_2_0
+.text:08048561                 mov     [esp+8], eax
+.text:08048565                 mov     dword ptr [esp+4], 100
+.text:0804856D                 lea     eax, [esp+28]
+.text:08048571                 mov     [esp], eax
+.text:08048574                 call    _fgets
+.text:08048579                 lea     eax, [esp+28]
+.text:0804857D                 mov     [esp], eax
+.text:08048580                 call    verify_user_pass
+.text:08048585                 mov     [esp+5Ch], eax
+.text:08048589                 cmp     dword ptr [esp+5Ch], 0
+.text:0804858E                 jz      short loc_8048597
+.text:08048590                 cmp     dword ptr [esp+92], 0
+.text:08048595                 jz      short loc_80485AA
+.text:08048597
+.text:08048597 loc_8048597:                            ; CODE XREF: main+BE↑j
+.text:08048597                 mov     dword ptr [esp], offset aNopeIncorrectP ; "nope, incorrect password...\n"
+.text:0804859E                 call    _puts
+.text:080485A3                 mov     eax, 1
+.text:080485A8                 jmp     short loc_80485AF
+.text:080485AA ; ---------------------------------------------------------------------------
+.text:080485AA
+.text:080485AA loc_80485AA:                            ; CODE XREF: main+C5↑j
+.text:080485AA                 mov     eax, 0
+.text:080485AF
+.text:080485AF loc_80485AF:                            ; CODE XREF: main+7E↑j
+.text:080485AF                                         ; main+D8↑j
+.text:080485AF                 lea     esp, [ebp-8]
+.text:080485B2                 pop     ebx
+.text:080485B3                 pop     edi
+.text:080485B4                 pop     ebp
+.text:080485B5                 retn
+.text:080485B5 ; } // starts at 80484D0
+.text:080485B5 main            endp
