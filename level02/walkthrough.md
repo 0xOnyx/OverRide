@@ -477,4 +477,29 @@ the argument is on 288 - 160 =  128
 
 
 but because eache argument is 8 elment of space 
-128 / 8 = 16
+128 / 8 = 16 
+
+
+but abi say that you  need to use before the register is 16 + 6 register so is = 22 element
+
+
+
+so to bypass in local gdb i use this to modifiy the addres of the string :
+set {char[20]} $rdi = "/tmp/.pass"
+
+
+
+so the flag is len of 41 octet so one octet for the \0 so 40 octet
+
+for print i use %p is print 8 octet from the stack so i need 40 / 8 = 5 print from the stack
+
+
+so each element is look like that :
+
+%22 + X $p * 5 
+
+
+and found the flag !
+
+Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H
+

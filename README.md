@@ -8,3 +8,10 @@ qemu-system-x86_64 -boot d -cdrom ./override.iso -m 2048 -enable-kvm \
 
 ssh utilisateur@localhost -p 8888
 
+
+#uesful links 
+https://dogbolt.org/
+
+https://shell-storm.org/shellcode/index.html
+
+

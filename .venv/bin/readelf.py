@@ -1,4 +1,4 @@
-#!/home/onyx/IdeaProjects/OverRide/.venv/bin/python3
+#!/home/kali/Documents/project/OverRide/.venv/bin/python3
 #-------------------------------------------------------------------------------
 # scripts/readelf.py
 #

