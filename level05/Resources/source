@@ -1,0 +1,103 @@
+.text:08048444                 public main
+.text:08048444 main            proc near               ; DATA XREF: _start+17↑o
+.text:08048444
+.text:08048444 buffer          = byte ptr -70h
+.text:08048444 i               = dword ptr -0Ch
+.text:08048444 argc            = dword ptr  8
+.text:08048444 argv            = dword ptr  0Ch
+.text:08048444 envp            = dword ptr  10h
+.text:08048444
+.text:08048444 ; __unwind {
+.text:08048444                 push    ebp
+.text:08048445                 mov     ebp, esp
+.text:08048447                 push    edi
+.text:08048448                 push    ebx
+.text:08048449                 and     esp, 0FFFFFFF0h
+.text:0804844C                 sub     esp, 144
+.text:08048452                 mov     [esp+98h+i], 0
+.text:0804845D                 mov     eax, ds:stdin@@GLIBC_2_0
+.text:08048462                 mov     [esp+8], eax
+.text:08048466                 mov     dword ptr [esp+4], 64h ; 'd'
+.text:0804846E                 lea     eax, [esp+98h+buffer]
+.text:08048472                 mov     [esp], eax
+.text:08048475                 call    _fgets
+.text:0804847A                 mov     [esp+98h+i], 0
+.text:08048485                 jmp     short loc_80484D3
+.text:08048487 ; ---------------------------------------------------------------------------
+.text:08048487
+.text:08048487 loc_8048487:                            ; CODE XREF: main+BA↓j
+.text:08048487                 lea     eax, [esp+98h+buffer]
+.text:0804848B                 add     eax, [esp+98h+i]
+.text:08048492                 movzx   eax, byte ptr [eax]
+.text:08048495                 cmp     al, 64
+.text:08048497                 jle     short loc_80484CB
+.text:08048499                 lea     eax, [esp+98h+buffer]
+.text:0804849D                 add     eax, [esp+98h+i]
+.text:080484A4                 movzx   eax, byte ptr [eax]
+.text:080484A7                 cmp     al, 90
+.text:080484A9                 jg      short loc_80484CB
+.text:080484AB                 lea     eax, [esp+98h+buffer]
+.text:080484AF                 add     eax, [esp+98h+i]
+.text:080484B6                 movzx   eax, byte ptr [eax]
+.text:080484B9                 mov     edx, eax
+.text:080484BB                 xor     edx, 32
+.text:080484BE                 lea     eax, [esp+98h+buffer]
+.text:080484C2                 add     eax, [esp+98h+i]
+.text:080484C9                 mov     [eax], dl
+.text:080484CB
+.text:080484CB loc_80484CB:                            ; CODE XREF: main+53↑j
+.text:080484CB                                         ; main+65↑j
+.text:080484CB                 add     dword ptr [esp+8Ch], 1
+.text:080484D3
+.text:080484D3 loc_80484D3:                            ; CODE XREF: main+41↑j
+.text:080484D3                 mov     ebx, [esp+98h+i]
+.text:080484DA                 lea     eax, [esp+98h+buffer]
+.text:080484DE                 mov     dword ptr [esp+1Ch], 0FFFFFFFFh
+.text:080484E6                 mov     edx, eax
+.text:080484E8                 mov     eax, 0
+.text:080484ED                 mov     ecx, [esp+1Ch]
+.text:080484F1                 mov     edi, edx
+.text:080484F3                 repne scasb
+.text:080484F5                 mov     eax, ecx
+.text:080484F7                 not     eax
+.text:080484F9                 sub     eax, 1
+.text:080484FC                 cmp     ebx, eax
+.text:080484FE                 jb      short loc_8048487
+.text:08048500                 lea     eax, [esp+98h+buffer]
+.text:08048504                 mov     [esp], eax
+.text:08048507                 call    _printf
+.text:0804850C                 mov     dword ptr [esp], 0
+.text:08048513                 call    _exit
+.text:08048513 ; } // starts at 8048444
+.text:08048518                 nop
+.text:08048519                 nop
+.text:0804851A                 nop
+.text:0804851B                 nop
+.text:0804851C                 nop
+.text:0804851D                 nop
+.text:0804851E                 nop
+.text:0804851F                 nop
+.text:0804851F main            endp ; sp-analysis failed
+
+
+
+
+
+int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  int result; // eax
+  char buffer[100]; // [esp+28h] [ebp-70h] BYREF
+  unsigned int i; // [esp+8Ch] [ebp-Ch]
+
+  i = 0;
+  fgets(buffer, 100, stdin);
+  for ( i = 0; i < strlen(buffer); ++i )
+  {
+    if ( buffer[i] > 64 && buffer[i] <= 90 )
+      buffer[i] ^= 0x20u;
+  }
+  printf(buffer);
+  exit(0);
+  _libc_csu_init();
+  return result;
+}
