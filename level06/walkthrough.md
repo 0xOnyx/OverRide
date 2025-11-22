@@ -1,18 +1,30 @@
-so the programe take two input and make some hash and compare with the value
-is correct is spawn a new /bin/bash
+# Level06 Write-up
 
+## Introduction
 
-the problem is thah check if the program have some already attach debug :
-  if ( ptrace(PTRACE_TRACEME, 0, 1, 0) == -1 )
+The program takes two inputs and makes some hash and compares it with a value. If it's correct, it spawns a new `/bin/bash`.
 
+## Anti-Debugging Protection
 
-  so the solution is to make a break point juste before and jump to to the next instruction 
+The problem is that it checks if the program has some debugger already attached:
 
-  but i prefer the aproch that juste code the function and look wat's is expect from the input
+```c
+if ( ptrace(PTRACE_TRACEME, 0, 1, 0) == -1 )
+```
 
+## Solution Approach
 
-so i found for the string jerdos
-i found the serial : 6232807
+The solution is to make a breakpoint just before and jump to the next instruction.
 
-  and GET THE FLAG =>
-  GbcPDRgsFK77LNnnuh7QyFYA2942Gp8yKj9KrWD8
+But I prefer the approach that just codes the function and looks at what's expected from the input.
+
+## Finding the Credentials
+
+So I found for the string `jerdos`:
+I found the serial: `6232807`
+
+## Flag
+
+```
+GbcPDRgsFK77LNnnuh7QyFYA2942Gp8yKj9KrWD8
+```

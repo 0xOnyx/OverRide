@@ -1,46 +1,57 @@
+# Level03 Write-up
+
+## Introduction
+
+```bash
 level02@OverRide:~$ su level03
 Password: 
+```
+
+## Security Analysis
+
+```
 RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      FILE
 Partial RELRO   Canary found      NX enabled    No PIE          No RPATH   No RUNPATH   /home/users/level03/level03
+```
 
+So the program has:
+- Partial protection of the GOT
+- Canary enabled
+- **BUT** has the stack executable
+- No ASLR
 
-so the program have
-partiel protection of the got
-have the canary enable
-BUT have the stack executable
-and no have aslr 
+So here the only possibility is to use ROP (Return-Oriented Programming) gadgets!
 
+## Program Execution
 
-
-so here the only possibility is to use ROP so gadget !
-
-
- ./level03 
+```bash
+./level03 
 ***********************************
 *               level03         **
 ***********************************
 Password:a
 
 Invalid Password
+```
 
+It just takes an input and writes "Invalid Password" if it's not valid.
 
-is juste put a input and write is not valide
+## Function Analysis
 
-
+```
 info function :
 0x08048617  get_unum
 0x0804864f  prog_timeout
 0x08048660  decrypt
 0x08048747  test
 0x0804885a  main
+```
 
+It has multiple functions.
 
-is have multiple function   
+## Main Function
 
-
-
-
-the main function : 
+```c
 int __cdecl main(int argc, const char **argv, const char **envp)
 {
   time_t v3; // eax
@@ -56,8 +67,11 @@ int __cdecl main(int argc, const char **argv, const char **envp)
   test(savedregs, 322424845);
   return 0;
 }
+```
 
-the function test :
+## Test Function
+
+```c
 int __cdecl test(int a1, int a2)
 {
   int result; // eax
@@ -89,8 +103,13 @@ int __cdecl test(int a1, int a2)
   }
   return result;
 }
+```
 
-so let's show wat's is inside decrypt :
+## Decrypt Function
+
+Let's see what's inside `decrypt`:
+
+```c
 int __cdecl decrypt(char a1)
 {
   unsigned int i; // [esp+20h] [ebp-28h]
@@ -107,20 +126,22 @@ int __cdecl decrypt(char a1)
   else
     return puts("\nInvalid Password");
 }
+```
 
+## Analysis
 
+Actually, if you pass a value between `322424845` to `322424845 - 21`, it uses the value of the comparison between 1 to 21.
 
-so actually if you passe a value between 322424845 to 322424845 - 21 is 
-is use the value of the compariason between 1 to 21 
+Otherwise, it uses a random value.
 
-othervise is use a random value 
+So it's only possible to pass these 21 possibilities, and that's okay.
 
+## Solution
 
-so is only possible to pass this 21 possibilyt and is ok 
+Found the value: `322424827`
 
+## Flag
 
-and found is 322424827
-
-
-and found the flag !
+```
 kgv3tkEb9h2mLkRsPkXRfc2mHbjMxQzvb2FrgKkf
+```

@@ -1,8 +1,12 @@
-#begin
+# Level00 Write-up
 
-so let's strat to login and watch the frist program
+## Introduction
 
+Let's start by logging in and examining the first program.
 
+## Program Execution
+
+```bash
 level00@OverRide:~$ ./level00
 ***********************************
 * 	     -Level00 -		  *
@@ -10,13 +14,15 @@ level00@OverRide:~$ ./level00
 Password:1
 
 Invalid Password!
+```
 
+The program asks for a password and prints "Invalid Password!" if it's incorrect.
 
-so the programm is ask a password and is not crrect print invalid password 
+## Reverse Engineering
 
-decompile the program to now wat's is inside :
+Let's decompile the program to see what's inside:
 
-
+```assembly
 .text:08048494                 push    ebp
 .text:08048495                 mov     ebp, esp
 .text:08048497                 and     esp, 0FFFFFFF0h
@@ -44,20 +50,28 @@ decompile the program to now wat's is inside :
 .text:08048501                 call    _system
 .text:08048506                 mov     eax, 0
 .text:0804850B                 jmp     short locret_804851E
+```
 
+## Analysis
 
+The program reads a number from stdin using `scanf` and stores the value on the stack:
 
-so the porgramm get from stdin with scanf a number and store inside the stack the value
+```assembly
 .text:080484CE                 mov     eax, offset aD  ; "%d"
 .text:080484D3                 lea     edx, [esp+28]
 .text:080484D7                 mov     [esp+4], edx
 .text:080484DB                 mov     [esp], eax
 .text:080484DE                 call    ___isoc99_scanf
+```
 
+After that, it compares this value with `5276`. If they match, it launches a shell with `/bin/sh`.
 
-after is compare thiw value with 5276
-and is if is the same launch a shell of /bin/sh 
+## Solution
 
-AND GET THE FLAG !
+The password is `5276`. Entering this value will authenticate and spawn a shell.
 
+## Flag
+
+```
 uSq2ehEGT6c9S24zbshexZQBXUGrncxn5sD5QfGL
+```
